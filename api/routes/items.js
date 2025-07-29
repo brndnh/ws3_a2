@@ -4,60 +4,85 @@ const db = require('../db');
 const multer = require('multer');
 const path = require('path');
 
-// configure multer to handle image uploads
+// set up multer for image uploads
 const storage = multer.diskStorage({
     destination: './uploads',
     filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname)); // creates a unique filename
+        cb(null, Date.now() + path.extname(file.originalname));
     }
 });
 const upload = multer({ storage });
 
-// get all items (read)
+// get all items
 router.get('/', async (req, res) => {
-    const [rows] = await db.query(`
-        select items.*, categories.name as category_name
-        from items
-        join categories on items.category_id = categories.id
-    `);
-    res.json(rows);
+    try {
+        const [rows] = await db.query(`
+            select items.*, categories.name as category_name
+            from items
+            join categories on items.category_id = categories.id
+        `);
+        res.json(rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'database query failed' });
+    }
 });
 
-// get a single item by id (read)
+// get single item by id
 router.get('/:id', async (req, res) => {
-    const [rows] = await db.query('select * from items where id = ?', [req.params.id]);
-    res.json(rows[0]);
+    try {
+        const [rows] = await db.query('select * from items where id = ?', [req.params.id]);
+        res.json(rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'could not fetch item' });
+    }
 });
 
-// add a new item with image (create)
+// add item
 router.post('/', upload.single('image'), async (req, res) => {
-    const { name, description, category_id } = req.body;
-    const image = req.file?.filename;
+    try {
+        const { name, description, category_id } = req.body;
+        const image = req.file?.filename;
 
-    const [result] = await db.query(
-        'insert into items (name, description, image, category_id) values (?, ?, ?, ?)',
-        [name, description, image, category_id]
-    );
+        const [result] = await db.query(
+            'insert into items (name, description, image, category_id) values (?, ?, ?, ?)',
+            [name, description, image, category_id]
+        );
 
-    res.json({ id: result.insertId });
+        res.json({ id: result.insertId });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'could not insert item' });
+    }
 });
 
-// update an existing item (update)
+// update item
 router.put('/:id', async (req, res) => {
-    const { name, description, category_id } = req.body;
+    try {
+        const { name, description, category_id } = req.body;
 
-    await db.query(
-        'update items set name = ?, description = ?, category_id = ? where id = ?',
-        [name, description, category_id, req.params.id]
-    );
+        await db.query(
+            'update items set name = ?, description = ?, category_id = ? where id = ?',
+            [name, description, category_id, req.params.id]
+        );
 
-    res.json({ message: 'item updated' });
+        res.json({ message: 'item updated' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'could not update item' });
+    }
 });
 
-// delete an item by id (delete)
+// delete item
 router.delete('/:id', async (req, res) => {
-    await db.query('delete from items where id = ?', [req.params.id]);
-    res.json({ message: 'item deleted' });
+    try {
+        await db.query('delete from items where id = ?', [req.params.id]);
+        res.json({ message: 'item deleted' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'could not delete item' });
+    }
 });
 
 module.exports = router;

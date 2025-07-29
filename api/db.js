@@ -1,14 +1,13 @@
-// set up mysql connection
 const mysql = require('mysql2');
 
-// create connection pool
+// connect to mamp mysql (default: root / root, port 8889)
 const pool = mysql.createPool({
     host: 'localhost',
-    user: 'root', 
-    password: 'root', 
-    database: 'cassette_db', 
+    user: 'root',
+    password: 'root',
+    database: 'cassette_db',
     port: 8889,
 });
+// MAMP port set to 8889, default is 3306
 
-// export the pool with promise support
 module.exports = pool.promise();
