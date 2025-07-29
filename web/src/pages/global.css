@@ -12,14 +12,14 @@ body {
     line-height: 1.6;
 }
 
-/* headings */
+/* Headings */
 h1,
 h2 {
     color: #222;
     margin-bottom: 1rem;
 }
 
-/* links */
+/* Links */
 a {
     color: #5a67d8;
     text-decoration: none;
@@ -30,7 +30,7 @@ a:hover {
     text-decoration: underline;
 }
 
-/* form styles */
+/* Forms */
 form {
     display: flex;
     flex-direction: column;
@@ -39,15 +39,16 @@ form {
     margin-top: 2rem;
 }
 
-
 input[type="text"],
 input[type="number"],
+input[type="file"],
 textarea,
 select {
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+    padding: 0.75rem;
     font-size: 1rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-family: inherit;
     min-width: 200px;
 }
 
@@ -55,45 +56,53 @@ input[type="file"] {
     padding: 0.3rem 0;
 }
 
-button {
-    background-color: #5a67d8;
+textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+select {
+    appearance: none;
+    background-color: #fff;
+}
+
+/* Buttons */
+button[type="submit"],
+.cassette-info button {
+    padding: 0.75rem;
+    font-size: 1rem;
+    background-color: #5c6bc0;
     color: white;
     border: none;
-    padding: 0.5rem 1rem;
-    font-size: 1rem;
     border-radius: 6px;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: background-color 0.2s ease;
+}
+
+button[type="submit"]:hover,
+.cassette-info button:hover {
+    background-color: #3f51b5;
+}
+
+/* Add link */
+.add-link {
+    display: inline-block;
     margin-top: 1rem;
+    color: #5a57f2;
+    text-decoration: none;
+    font-weight: bold;
 }
 
-button:hover {
-    background-color: #434190;
+.add-link:hover {
+    text-decoration: underline;
 }
 
-/* item list */
-ul.item-list {
-    list-style: none;
-    padding-left: 1rem;
-}
-
-ul.item-list li {
-    margin-bottom: 1rem;
-    padding: 0.5rem;
-    background-color: white;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-/* utility */
+/* Utility */
 .mt-2 {
     margin-top: 2rem;
 }
 
-/* casette */
+/* Cassette layout */
 .cassette-grid {
     display: flex;
     flex-wrap: wrap;
@@ -132,17 +141,49 @@ ul.item-list li {
     margin: 0.25rem 0;
 }
 
-.cassette-info button {
-    margin-top: 0.5rem;
-    padding: 0.4rem 0.8rem;
-    background-color: #6366f1;
-    border: none;
-    border-radius: 5px;
-    color: white;
-    cursor: pointer;
-    font-size: 0.9rem;
+/* Button row for edit/delete */
+.button-row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
-.cassette-info button:hover {
-    background-color: #4f46e5;
+.cassette-info button {
+    background-color: #6366f1;
+    font-size: 0.8rem;
+}
+
+/* Item list */
+ul.item-list {
+    list-style: none;
+    padding-left: 1rem;
+}
+
+ul.item-list li {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background-color: white;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Controls (filter + add link) */
+.controls {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Category filter dropdown */
+.category-filter {
+    font-size: 1rem;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    min-width: 200px;
 }
