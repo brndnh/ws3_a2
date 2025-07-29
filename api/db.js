@@ -5,8 +5,9 @@ const mysql = require('mysql2');
 const pool = mysql.createPool({
     host: 'localhost',
     user: 'root', 
-    password: '', 
-    database: 'cassette_db' 
+    password: 'root', 
+    database: 'cassette_db', 
+    port: 8889,
 });
 
 // export the pool with promise support
