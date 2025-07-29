@@ -25,3 +25,4 @@ app.listen(PORT, () => {
 app.get('/', (req, res) => {
     res.send('api is running');
 });
+
