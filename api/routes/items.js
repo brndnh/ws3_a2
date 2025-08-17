@@ -36,21 +36,30 @@ router.get('/', auth, async (req, res) => {
     }
 });
 
-/* get single item (only if it belongs to the user) */
-router.get('/:id', auth, async (req, res) => {
+/* get all items for the logged-in user */
+router.get('/', auth, async (req, res) => {
     try {
-        const userId = req.user.userId;
-        const [rows] = await db.query(
-            `SELECT id, name, description, image, category_id
-       FROM items
-       WHERE id = ? AND user_id = ?`,
-            [req.params.id, userId]
-        );
-        if (rows.length === 0) return res.status(404).json({ message: 'not found' });
-        res.json(rows[0]);
+        const userId = req.user?.userId ?? req.user?.id ?? req.user?.user_id;
+        if (!userId) return res.status(401).json({ message: 'unauthorized: no user id' });
+
+        const [rows] = await db.query(`
+      SELECT
+        i.id,
+        i.name,
+        i.description,
+        i.image,
+        i.category_id,
+        c.name AS category_name
+      FROM items i
+      LEFT JOIN categories c ON c.id = i.category_id
+      WHERE i.user_id = ?
+      ORDER BY i.id DESC
+    `, [userId]);
+
+        res.json(rows);
     } catch (err) {
-        console.error('get item error:', err);
-        res.status(500).json({ message: 'server error' });
+        console.error('get items error:', err);
+        res.status(500).json({ message: 'server error', code: err.code, detail: err.sqlMessage || err.message });
     }
 });
 

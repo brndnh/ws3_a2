@@ -6,7 +6,7 @@ const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
     password: 'root',
-    database: 'cassette_collection', // or 'cassette_db' if that's your schema
+    database: 'cassette_collection',
     port: 8889
 });
 
