@@ -17,7 +17,7 @@ function ItemDetails() {
     return (
         <div>
             <h1>{item.name}</h1>
-            <p><strong>Category:</strong> {item.category_id}</p>
+            <p><strong>category:</strong> {item.category_id}</p>
             <p>{item.description}</p>
             {item.image && <img src={`http://localhost:3001/uploads/${item.image}`} alt={item.name} width="200" />}
         </div>

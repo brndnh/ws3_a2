@@ -9,6 +9,8 @@ function AddItem() {
         category_id: '',
         image: null
     });
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState('');
 
     const navigate = useNavigate();
 
@@ -22,38 +24,77 @@ function AddItem() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
 
-        const formData = new FormData();
-        formData.append('name', form.name);
-        formData.append('description', form.description);
-        formData.append('category_id', form.category_id);
-        if (form.image) formData.append('image', form.image);
+        // simple client validation to avoid bad payloads
+        if (!form.name.trim()) return setError('please enter a name');
+        if (!form.category_id) return setError('please choose a category');
+
+        // coerce category_id to an integer (mysql fk safety)
+        const catId = Number(form.category_id);
+        if (!Number.isInteger(catId)) return setError('category is invalid');
+
+        const fd = new FormData();
+        fd.append('name', form.name.trim());
+        fd.append('description', form.description.trim());
+        // send as string, but it represents an int and server will handle it
+        fd.append('category_id', String(catId));
+        if (form.image) fd.append('image', form.image);
 
         try {
-            await addItem(formData);
+            setSubmitting(true);
+            await addItem(fd);
             navigate('/');
         } catch (err) {
             console.error('error adding item:', err);
+            setError(err?.message || 'failed to add item');
+        } finally {
+            setSubmitting(false);
         }
     };
 
     return (
         <div>
-            <h1>Add New Cassette</h1>
+            <h1>add new cassette</h1>
             <form onSubmit={handleSubmit}>
-                <input type="text" name="name" placeholder="Name" onChange={handleChange} required />
-                <textarea name="description" placeholder="Description" onChange={handleChange}></textarea>
+                <input
+                    type="text"
+                    name="name"
+                    placeholder="name"
+                    onChange={handleChange}
+                    required
+                />
 
-                {/* might not be the optimal way, i would consider looking for actual ID's from the table in the future */}
-                <select name="category_id" value={form.category_id} onChange={handleChange} required>
-                    <option value="">Select a category</option>
-                    <option value="1">1 - Lofi</option>
-                    <option value="2">2 - Synthwave</option>
-                    <option value="3">3 - Breakcore</option>
+                <textarea
+                    name="description"
+                    placeholder="description"
+                    onChange={handleChange}
+                />
+
+                <select
+                    name="category_id"
+                    value={form.category_id}
+                    onChange={handleChange}
+                    required
+                >
+                    <option value="">select a category</option>
+                    <option value="1">1 - lofi</option>
+                    <option value="2">2 - synthwave</option>
+                    <option value="3">3 - breakcore</option>
                 </select>
 
-                <input type="file" name="image" accept="image/*" onChange={handleChange} />
-                <button type="submit">Add Item</button>
+                <input
+                    type="file"
+                    name="image"
+                    accept="image/*"
+                    onChange={handleChange}
+                />
+
+                {error && <p style={{ color: 'crimson', marginTop: 8 }}>{error}</p>}
+
+                <button type="submit" disabled={submitting}>
+                    {submitting ? 'adding…' : 'add item'}
+                </button>
             </form>
         </div>
     );

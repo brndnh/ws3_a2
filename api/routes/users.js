@@ -5,45 +5,94 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const db = require('../db');
 
-require('dotenv').config(); // add this to load .env
-const jwt = require('jsonwebtoken');
+require('dotenv').config();
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-fallback-secret';
 
-
-// JWT secret key (store securely in production)
-const JWT_SECRET = 'your-secret-key';
-
+/* user registration: POST /users */
 router.post(
-    '/sign-in',
+    '/',
     [
-        body('email').isEmail().withMessage('Email is invalid'),
-        body('password').notEmpty().withMessage('Password is required'),
+        body('email')
+            .isEmail().withMessage('invalid email')
+            .normalizeEmail()
+            .trim(),
+        body('password')
+            .isLength({ min: 6 }).withMessage('password must be at least 6 characters')
     ],
     async (req, res) => {
         const errors = validationResult(req);
-        if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
 
-        const { email, password } = req.body;
+        const email = String(req.body.email).toLowerCase().trim();
+        const password = String(req.body.password);
 
         try {
-            const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
-
-            if (users.length === 0) {
-                return res.status(401).json({ message: 'Invalid credentials' });
+            // check if email already exists
+            const [existing] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
+            if (existing.length > 0) {
+                return res.status(409).json({ message: 'email already in use' });
             }
 
-            const user = users[0];
-            const passwordMatch = await bcrypt.compare(password, user.password);
+            // hash password and insert
+            const hash = await bcrypt.hash(password, 10);
+            await db.query('INSERT INTO users (email, password) VALUES (?, ?)', [email, hash]);
 
-            if (!passwordMatch) {
-                return res.status(401).json({ message: 'Invalid credentials' });
+            return res.status(201).json({ message: 'user registered successfully' });
+        } catch (err) {
+            console.error('register error:', err);
+            return res.status(500).json({ message: 'server error' });
+        }
+    }
+);
+
+/* user sign-in: POST /users/sign-in */
+router.post(
+    '/sign-in',
+    [
+        body('email')
+            .isEmail().withMessage('invalid email')
+            .normalizeEmail()
+            .trim(),
+        body('password')
+            .notEmpty().withMessage('password is required')
+    ],
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const email = String(req.body.email).toLowerCase().trim();
+        const password = String(req.body.password);
+
+        try {
+            // fetch user by email
+            const [rows] = await db.query('SELECT id, email, password FROM users WHERE email = ?', [email]);
+            if (rows.length === 0) {
+                return res.status(401).json({ message: 'invalid credentials' });
             }
 
+            const user = rows[0];
+
+            // compare password
+            const ok = await bcrypt.compare(password, user.password);
+            if (!ok) {
+                return res.status(401).json({ message: 'invalid credentials' });
+            }
+
+            // issue jwt
             const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '2h' });
 
-            res.json({ token });
+            return res.json({
+                message: 'signed in',
+                token,
+                user: { id: user.id, email: user.email }
+            });
         } catch (err) {
-            console.error(err);
-            res.status(500).json({ message: 'Server error' });
+            console.error('sign-in error:', err);
+            return res.status(500).json({ message: 'server error' });
         }
     }
 );

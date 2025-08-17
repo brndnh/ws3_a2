@@ -1,63 +1,125 @@
 const express = require('express');
-const router = express.Router();
-const db = require('../db');
-const multer = require('multer');
 const path = require('path');
+const multer = require('multer');
+const db = require('../db');
+const auth = require('../middleware/authMiddleware');
 
-// configure multer to handle image uploads
+const router = express.Router();
+
+// configure multer for image uploads
 const storage = multer.diskStorage({
-    destination: './uploads',
+    destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'uploads')),
     filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname)); // creates a unique filename
+        const ext = path.extname(file.originalname) || '';
+        const name = `${Date.now()}${ext}`;
+        cb(null, name);
     }
 });
 const upload = multer({ storage });
 
-// get all items (read)
-router.get('/', async (req, res) => {
-    const [rows] = await db.query(`
-        select items.*, categories.name as category_name
-        from items
-        join categories on items.category_id = categories.id
-    `);
-    res.json(rows);
+/* get all items for the logged-in user */
+router.get('/', auth, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const [rows] = await db.query(
+            `SELECT i.id, i.name, i.description, i.image, i.category_id, c.name AS category_name
+       FROM items i
+       LEFT JOIN categories c ON c.id = i.category_id
+       WHERE i.user_id = ?
+       ORDER BY i.id DESC`,
+            [userId]
+        );
+        res.json(rows);
+    } catch (err) {
+        console.error('get items error:', err);
+        res.status(500).json({ message: 'server error' });
+    }
 });
 
-// get a single item by id (read)
-router.get('/:id', async (req, res) => {
-    const [rows] = await db.query('select * from items where id = ?', [req.params.id]);
-    res.json(rows[0]);
+/* get single item (only if it belongs to the user) */
+router.get('/:id', auth, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const [rows] = await db.query(
+            `SELECT id, name, description, image, category_id
+       FROM items
+       WHERE id = ? AND user_id = ?`,
+            [req.params.id, userId]
+        );
+        if (rows.length === 0) return res.status(404).json({ message: 'not found' });
+        res.json(rows[0]);
+    } catch (err) {
+        console.error('get item error:', err);
+        res.status(500).json({ message: 'server error' });
+    }
 });
 
-// add a new item with image (create)
-router.post('/', upload.single('image'), async (req, res) => {
+/* create item (sets user_id from token) */
+router.post('/', auth, upload.single('image'), async (req, res) => {
+    const userId = req.user.userId;
     const { name, description, category_id } = req.body;
-    const image = req.file?.filename;
+    const image = req.file ? req.file.filename : null;
 
-    const [result] = await db.query(
-        'insert into items (name, description, image, category_id) values (?, ?, ?, ?)',
-        [name, description, image, category_id]
-    );
+    if (!name) return res.status(400).json({ message: 'name is required' });
 
-    res.json({ id: result.insertId });
+    try {
+        const [result] = await db.query(
+            `INSERT INTO items (name, description, image, category_id, user_id)
+       VALUES (?, ?, ?, ?, ?)`,
+            [name, description || null, image, category_id || null, userId]
+        );
+        res.status(201).json({ id: result.insertId });
+    } catch (err) {
+        console.error('create item error:', err);
+        res.status(500).json({ message: 'server error' });
+    }
 });
 
-// update an existing item (update)
-router.put('/:id', async (req, res) => {
+/* update item (only if user owns it); supports optional new image */
+router.put('/:id', auth, upload.single('image'), async (req, res) => {
+    const userId = req.user.userId;
     const { name, description, category_id } = req.body;
+    const newImage = req.file ? req.file.filename : null;
 
-    await db.query(
-        'update items set name = ?, description = ?, category_id = ? where id = ?',
-        [name, description, category_id, req.params.id]
-    );
+    try {
+        // fetch current item for ownership + current image
+        const [rows] = await db.query(
+            'SELECT id, image FROM items WHERE id = ? AND user_id = ?',
+            [req.params.id, userId]
+        );
+        if (rows.length === 0) return res.status(404).json({ message: 'not found' });
 
-    res.json({ message: 'item updated' });
+        const current = rows[0];
+        const imageToSave = newImage || current.image;
+
+        await db.query(
+            `UPDATE items
+       SET name = ?, description = ?, image = ?, category_id = ?
+       WHERE id = ? AND user_id = ?`,
+            [name || null, description || null, imageToSave, category_id || null, req.params.id, userId]
+        );
+
+        res.json({ message: 'updated' });
+    } catch (err) {
+        console.error('update item error:', err);
+        res.status(500).json({ message: 'server error' });
+    }
 });
 
-// delete an item by id (delete)
-router.delete('/:id', async (req, res) => {
-    await db.query('delete from items where id = ?', [req.params.id]);
-    res.json({ message: 'item deleted' });
+/* delete item (only if user owns it) */
+router.delete('/:id', auth, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const [result] = await db.query(
+            'DELETE FROM items WHERE id = ? AND user_id = ?',
+            [req.params.id, userId]
+        );
+        if (result.affectedRows === 0) return res.status(404).json({ message: 'not found' });
+        res.json({ message: 'deleted' });
+    } catch (err) {
+        console.error('delete item error:', err);
+        res.status(500).json({ message: 'server error' });
+    }
 });
 
 module.exports = router;

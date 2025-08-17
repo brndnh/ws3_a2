@@ -72,21 +72,21 @@ function EditItem() {
 
     return (
         <div>
-            <h1>Edit Cassette</h1>
+            <h1>edit cassette</h1>
             <form onSubmit={handleSubmit}>
                 <input
                     type="text"
                     name="name"
                     value={form.name}
                     onChange={handleChange}
-                    placeholder="Name"
+                    placeholder="name"
                     required
                 />
                 <textarea
                     name="description"
                     value={form.description}
                     onChange={handleChange}
-                    placeholder="Description"
+                    placeholder="description"
                 ></textarea>
                 <select
                     name="category_id"
@@ -94,10 +94,10 @@ function EditItem() {
                     onChange={handleChange}
                     required
                 >
-                    <option value="">Select a Category</option>
+                    <option value="">select a category</option>
                     {categories.map((cat) => (
                         <option key={cat.id} value={cat.id}>
-                            {cat.NAME}
+                            {cat.NAME?.toLowerCase() || cat.name?.toLowerCase()}
                         </option>
                     ))}
                 </select>
@@ -107,7 +107,7 @@ function EditItem() {
                     accept="image/*"
                     onChange={handleChange}
                 />
-                <button type="submit">Update Item</button>
+                <button type="submit">update item</button>
             </form>
         </div>
     );

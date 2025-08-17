@@ -41,7 +41,7 @@ function Home() {
 
     return (
         <div className="home-container">
-            <h1>My Cassette Collection</h1>
+            <h1>my cassette collection</h1>
 
             <div className="controls">
                 <select
@@ -49,13 +49,13 @@ function Home() {
                     onChange={handleCategoryChange}
                     className="category-filter"
                 >
-                    <option value="all">All Categories</option>
-                    <option value="1">Lo-fi</option>
-                    <option value="2">Synth</option>
-                    <option value="3">Jazz</option>
+                    <option value="all">all categories</option>
+                    <option value="1">lo-fi</option>
+                    <option value="2">synth</option>
+                    <option value="3">jazz</option>
                 </select>
 
-                <Link to="/add" className="add-link">+ Add New Item</Link>
+                <Link to="/add" className="add-link">+ add new item</Link>
             </div>
 
             <div className="cassette-grid">
@@ -70,15 +70,13 @@ function Home() {
                         <div className="cassette-info button-row">
                             <h3>{item.name}</h3>
                             <p className="category">{item.category_name}</p>
-                            <Link to={`/edit/${item.id}`} className="edit-link">Edit</Link>
-                            <button onClick={() => handleDelete(item.id)}>Delete</button>
+                            <Link to={`/edit/${item.id}`} className="edit-link">edit</Link>
+                            <button onClick={() => handleDelete(item.id)}>delete</button>
                         </div>
-
                     </div>
                 ))}
             </div>
         </div>
-
     );
 }
 
