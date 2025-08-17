@@ -14,15 +14,18 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // serves 
 
 // import and use routes
 const itemRoutes = require('./routes/items');
-app.use('/api/items', itemRoutes); // all item routes are mounted here
+const userRoutes = require('./routes/users'); // ← NEW
 
-// start the server
-app.listen(PORT, () => {
-    console.log(`server is running on http://localhost:${PORT}`);
-});
+// Mount routes
+app.use('/api/items', itemRoutes);
+app.use('/users', userRoutes); // ← NEW
 
 // test route to check if API is running
 app.get('/', (req, res) => {
-    res.send('api is running');
+    res.send('API is running');
 });
 
+// start the server
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});

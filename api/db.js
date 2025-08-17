@@ -5,7 +5,7 @@ const pool = mysql.createPool({
     host: 'localhost',
     user: 'root',
     password: 'root',
-    database: 'cassette_db',
+    database: 'cassette_collection',
     port: 8889,
 });
 // MAMP port set to 8889, default is 3306
