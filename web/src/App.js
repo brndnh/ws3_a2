@@ -18,7 +18,7 @@ function Header() {
       {isAuthed ? (
         <>
           <span style={{ color: '#666' }}>signed in as {user?.email}</span>
-          <button onClick={logout}>log out</button>
+        <button className="logout-btn" onClick={logout}>log out</button>
         </>
       ) : (
         <>

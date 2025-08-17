@@ -187,3 +187,24 @@ ul.item-list li {
     border-radius: 6px;
     min-width: 200px;
 }
+
+/* make logout button easier to press */
+button.logout-btn {
+    padding: 6px 14px;
+    margin-left: 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 0, 0, .15);
+    background: #f3f4f6;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s ease, transform .05s ease;
+}
+
+button.logout-btn:hover {
+    background: #e5e7eb;
+}
+
+button.logout-btn:active {
+    transform: translateY(1px);
+}
